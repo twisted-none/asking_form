@@ -1,0 +1,50 @@
+services:
+  # Backend сервис
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: form-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend сервис
+  frontend:
+    build:
+      context: .  # Контекст - корневая директория проекта
+      dockerfile: frontend/Dockerfile  # Dockerfile находится в папке frontend
+    container_name: form-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  node_modules:
